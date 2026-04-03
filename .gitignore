@@ -1,0 +1,10 @@
+.env
+__pycache__/
+*.pyc
+.cursor/
+assets/
+terminals/
+agent-transcripts/
+mcps/
+venv/
+.venv/
