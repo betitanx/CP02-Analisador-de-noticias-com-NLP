@@ -15,7 +15,14 @@ _HEADERS = {"User-Agent": _USER_AGENT}
 
 _NOISE_TAGS = [
     "script", "style", "nav", "footer", "header",
-    "aside", "iframe", "noscript", "form",
+    "aside", "iframe", "noscript", "form", "button",
+    "figcaption", "figure",
+]
+
+_JUNK_PATTERNS = [
+    "cookie", "subscribe", "newsletter", "sign up", "log in",
+    "metadata extraction", "attached pdf", "json format",
+    "your task:", "you are provided",
 ]
 
 
@@ -24,6 +31,17 @@ def _detect_language(url: str) -> str:
     pt_indicators = [".br", "/portuguese", "/pt/", "globo.com", "uol.com", "folha.uol"]
     url_lower = url.lower()
     return "pt" if any(ind in url_lower for ind in pt_indicators) else "en"
+
+
+def _is_junk(text: str) -> bool:
+    """Verifica se o texto extraído parece ser lixo/template em vez de notícia."""
+    text_lower = text.lower()
+    matches = sum(1 for p in _JUNK_PATTERNS if p in text_lower)
+    if matches >= 2:
+        return True
+    if text_lower.startswith(("{", "[", "<!")) :
+        return True
+    return False
 
 
 def _extract_with_newspaper(url: str) -> dict | None:
@@ -41,9 +59,13 @@ def _extract_with_newspaper(url: str) -> dict | None:
         if not article.text or len(article.text.strip()) < 80:
             return None
 
+        cleaned = article.text.strip()
+        if _is_junk(cleaned):
+            return None
+
         return {
             "title": article.title or "",
-            "text": article.text.strip(),
+            "text": cleaned,
             "source": url,
         }
     except Exception:
@@ -73,7 +95,8 @@ def _extract_with_bs4(url: str) -> dict | None:
             or soup.find("main")
             or soup.find("div", class_=lambda c: c and any(
                 k in (c if isinstance(c, str) else " ".join(c))
-                for k in ["content", "article", "post", "texto", "materia"]
+                for k in ["content", "article", "post", "story", "body",
+                           "texto", "materia"]
             ))
         )
 
@@ -85,10 +108,13 @@ def _extract_with_bs4(url: str) -> dict | None:
         text = "\n".join(
             p.get_text(strip=True)
             for p in paragraphs
-            if len(p.get_text(strip=True)) > 30
+            if len(p.get_text(strip=True)) > 40
         )
 
-        if len(text.strip()) < 80:
+        if len(text.strip()) < 120:
+            return None
+
+        if _is_junk(text):
             return None
 
         return {
@@ -120,5 +146,5 @@ def scrape_news(url: str) -> dict:
 
     raise ValueError(
         "Não foi possível extrair o conteúdo da notícia. "
-        "Verifique se a URL aponta para um artigo acessível."
+        "Verifique se a URL aponta para um artigo de notícia acessível."
     )
