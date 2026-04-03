@@ -31,13 +31,13 @@ def analyze_sentiment(text: str) -> dict:
     """
     client = _get_client()
 
-    prompt = f"""Você é um analista de sentimentos especializado em textos jornalísticos em português.
-Analise o sentimento geral do texto abaixo e responda EXCLUSIVAMENTE com um JSON válido (sem markdown, sem ```).
+    prompt = f"""Você é um analista de sentimentos especializado em textos jornalísticos.
+O texto pode estar em português ou inglês. Analise o sentimento geral e responda EXCLUSIVAMENTE com um JSON válido (sem markdown, sem ```).
 
 O JSON deve ter exatamente estas chaves:
 - "label": classificação do sentimento ("positivo", "negativo" ou "neutro")
 - "score": número de 0 a 1 representando a confiança na classificação
-- "explanation": justificativa breve (1-2 frases) em português
+- "explanation": justificativa breve (1-2 frases) em português brasileiro
 
 Texto para análise:
 \"\"\"
@@ -80,7 +80,7 @@ def generate_summary(text: str) -> str:
     client = _get_client()
 
     prompt = f"""Você é um jornalista especialista em criar resumos concisos e informativos.
-Gere um resumo do texto abaixo em português. O resumo deve:
+O texto pode estar em português ou inglês. Gere um resumo em português brasileiro. O resumo deve:
 - Ter entre 3 e 5 frases
 - Manter os fatos mais importantes
 - Ser claro e objetivo
@@ -91,7 +91,7 @@ Texto para resumir:
 {text}
 \"\"\"
 
-Resumo:"""
+Resumo em português:"""
 
     try:
         response = client.models.generate_content(

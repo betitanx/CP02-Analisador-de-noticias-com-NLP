@@ -19,6 +19,13 @@ _NOISE_TAGS = [
 ]
 
 
+def _detect_language(url: str) -> str:
+    """Detecta idioma provável pela URL (pt ou en)."""
+    pt_indicators = [".br", "/portuguese", "/pt/", "globo.com", "uol.com", "folha.uol"]
+    url_lower = url.lower()
+    return "pt" if any(ind in url_lower for ind in pt_indicators) else "en"
+
+
 def _extract_with_newspaper(url: str) -> dict | None:
     """Tenta extrair o artigo usando a biblioteca newspaper3k."""
     try:
@@ -26,7 +33,8 @@ def _extract_with_newspaper(url: str) -> dict | None:
         config.browser_user_agent = _USER_AGENT
         config.request_timeout = 15
 
-        article = Article(url, language="pt", config=config)
+        lang = _detect_language(url)
+        article = Article(url, language=lang, config=config)
         article.download()
         article.parse()
 
